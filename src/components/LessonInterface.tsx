@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle, Lightbulb, Sparkles, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Lightbulb, Sparkles, Clock, Trophy, Brain } from "lucide-react";
+import { marketingCourse, type Lesson } from "@/data/marketingCourse";
+import { useCourseProgress } from "@/hooks/useCourseProgress";
+import { useToast } from "@/hooks/use-toast";
 
 interface LessonInterfaceProps {
   lessonId: string;
@@ -12,137 +15,77 @@ interface LessonInterfaceProps {
 }
 
 const LessonInterface = ({ lessonId, onBack }: LessonInterfaceProps) => {
+  const { progress, updateLessonProgress, completeLesson, updateStreak } = useCourseProgress();
+  const { toast } = useToast();
+  
   const [currentStep, setCurrentStep] = useState(0);
   const [userInput, setUserInput] = useState("");
   const [aiCoachFeedback, setAiCoachFeedback] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Find the lesson in the course data
+  const lesson = marketingCourse.find(l => l.id === lessonId);
+  
+  if (!lesson) {
+    return (
+      <div className="min-h-screen bg-gradient-secondary flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Lesson Not Found</h2>
+          <p className="text-muted-foreground mb-4">The requested lesson could not be found.</p>
+          <Button onClick={onBack}>Return to Dashboard</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Initialize current step from saved progress
+  useEffect(() => {
+    const savedStep = progress.lessonProgress[lessonId] || 0;
+    setCurrentStep(savedStep);
+  }, [lessonId, progress.lessonProgress]);
 
   // Mock lesson data - in real app this would come from API
-  const lessons = {
-    "marketing-ad-copy": {
-      id: "marketing-ad-copy",
-      title: "AI-Powered Ad Copy Creation",
-      description: "Learn to create compelling ad copy using AI tools",
-      estimatedTime: "8 mins",
-      role: "Marketing",
-      steps: [
-        {
-          type: "learn",
-          title: "Understanding AI Ad Copy Principles",
-          content: "AI can help you create more effective ad copy by analyzing successful patterns and suggesting improvements. Key principles include clarity, emotional appeal, and strong calls-to-action.",
-          tips: ["Keep your target audience in mind", "Test multiple variations", "Focus on benefits over features"]
-        },
-        {
-          type: "practice",
-          title: "Create Your First AI Ad Copy",
-          content: "Now it's your turn! Create an ad copy for a fitness app targeting busy professionals. Use the AI coach to guide you.",
-          prompt: "Write a Facebook ad copy for a fitness app called 'FitLife' targeting busy professionals aged 25-40. Focus on convenience and quick workouts.",
-          expectedElements: ["Target audience mention", "App name", "Key benefit", "Call to action"]
-        },
-        {
-          type: "feedback",
-          title: "AI Coach Review",
-          content: "Let's review your ad copy with our AI coach and see how it can be improved."
-        }
-      ]
-    },
-    "hr-job-description": {
-      id: "hr-job-description",
-      title: "AI-Assisted Job Description Writing",
-      description: "Create compelling job descriptions that attract top talent",
-      estimatedTime: "10 mins",
-      role: "HR",
-      steps: [
-        {
-          type: "learn",
-          title: "Modern Job Description Best Practices",
-          content: "AI can help you write job descriptions that are inclusive, engaging, and effective at attracting qualified candidates. Focus on clear responsibilities, growth opportunities, and company culture.",
-          tips: ["Use inclusive language", "Highlight growth opportunities", "Be specific about requirements", "Include company values"]
-        },
-        {
-          type: "practice",
-          title: "Write a Software Developer Job Description",
-          content: "Create a job description for a mid-level software developer position at a startup. Make it engaging and inclusive.",
-          prompt: "Write a job description for a Mid-Level Software Developer at a fast-growing fintech startup. Include responsibilities, requirements, and what makes this role exciting.",
-          expectedElements: ["Clear role title", "Key responsibilities", "Required skills", "Company culture", "Growth opportunities"]
-        },
-        {
-          type: "feedback",
-          title: "AI Coach Review",
-          content: "Let's analyze your job description and make it even more compelling for candidates."
-        }
-      ]
-    },
-    "support-response": {
-      id: "support-response",
-      title: "AI-Enhanced Customer Support",
-      description: "Handle customer inquiries with AI-powered responses",
-      estimatedTime: "7 mins",
-      role: "Customer Support",
-      steps: [
-        {
-          type: "learn",
-          title: "Empathetic AI-Assisted Responses",
-          content: "Learn to use AI to craft responses that are both efficient and empathetic. AI can help you address customer concerns while maintaining a personal touch.",
-          tips: ["Acknowledge the customer's feelings", "Provide clear solutions", "Use positive language", "Follow up appropriately"]
-        },
-        {
-          type: "practice",
-          title: "Handle a Billing Complaint",
-          content: "A customer is frustrated about an unexpected charge on their account. Craft a response that addresses their concern professionally.",
-          prompt: "Customer says: 'I was charged $29.99 but I thought I was on the free plan. This is ridiculous!' Write a helpful, empathetic response.",
-          expectedElements: ["Acknowledge frustration", "Apologize for confusion", "Explain the situation", "Offer solution", "Next steps"]
-        },
-        {
-          type: "feedback",
-          title: "AI Coach Review",
-          content: "Let's review your response and see how to make it even more effective and empathetic."
-        }
-      ]
-    },
-    "ops-automation": {
-      id: "ops-automation",
-      title: "Workflow Automation with AI",
-      description: "Streamline operations using AI-powered automation",
-      estimatedTime: "12 mins",
-      role: "Operations",
-      steps: [
-        {
-          type: "learn",
-          title: "Identifying Automation Opportunities",
-          content: "AI can help identify repetitive tasks and suggest automation workflows. Learn to spot processes that can be streamlined and improved.",
-          tips: ["Look for repetitive tasks", "Consider data processing needs", "Think about approval workflows", "Focus on time-consuming processes"]
-        },
-        {
-          type: "practice",
-          title: "Design an Invoice Processing Workflow",
-          content: "Design an automated workflow for processing incoming invoices using AI tools.",
-          prompt: "Describe a workflow to automatically process incoming invoices: extract data, validate information, route for approval, and update accounting systems.",
-          expectedElements: ["Data extraction step", "Validation process", "Approval routing", "System integration", "Error handling"]
-        },
-        {
-          type: "feedback",
-          title: "AI Coach Review",
-          content: "Let's optimize your workflow design and identify additional automation opportunities."
-        }
-      ]
-    }
-  };
-
-  const lesson = lessons[lessonId as keyof typeof lessons];
-
   const currentStepData = lesson.steps[currentStep];
 
   const handleNext = () => {
     if (currentStep < lesson.steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      updateLessonProgress(lessonId, nextStep);
+      updateStreak();
+    } else {
+      // Lesson completed
+      if (!progress.completedLessons.includes(lessonId)) {
+        completeLesson(lessonId);
+        toast({
+          title: "🎉 Lesson Completed!",
+          description: `You've finished "${lesson.title}" and earned 100 points!`,
+        });
+      }
+      onBack();
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+      updateLessonProgress(lessonId, prevStep);
     }
+  };
+
+  const handleQuizSubmit = () => {
+    setQuizSubmitted(true);
+    const questions = currentStepData.quizQuestions || [];
+    const correctAnswers = questions.filter((q, index) => quizAnswers[index] === q.correctAnswer);
+    const score = Math.round((correctAnswers.length / questions.length) * 100);
+    
+    toast({
+      title: `Quiz Results: ${score}%`,
+      description: `You got ${correctAnswers.length} out of ${questions.length} questions correct!`,
+    });
   };
 
   const handleSubmitForReview = () => {
@@ -302,6 +245,54 @@ This workflow includes specific thresholds, performance tracking, and continuous
                   </div>
                 )}
 
+                {currentStepData.type === 'quiz' && (
+                  <div className="space-y-6">
+                    {currentStepData.quizQuestions?.map((question, qIndex) => (
+                      <div key={qIndex} className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+                        <h4 className="font-medium text-foreground mb-3">
+                          Question {qIndex + 1}: {question.question}
+                        </h4>
+                        <div className="space-y-2">
+                          {question.options.map((option, oIndex) => (
+                            <label key={oIndex} className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`question-${qIndex}`}
+                                value={oIndex}
+                                checked={quizAnswers[qIndex] === oIndex}
+                                onChange={() => setQuizAnswers(prev => ({ ...prev, [qIndex]: oIndex }))}
+                                className="w-4 h-4 text-primary"
+                              />
+                              <span className="text-sm text-muted-foreground">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {quizSubmitted && (
+                          <div className={`mt-3 p-3 rounded-lg text-sm ${
+                            quizAnswers[qIndex] === question.correctAnswer 
+                              ? 'bg-success/20 text-success border border-success/20' 
+                              : 'bg-destructive/20 text-destructive border border-destructive/20'
+                          }`}>
+                            {quizAnswers[qIndex] === question.correctAnswer ? '✅ Correct!' : '❌ Incorrect'}
+                            <p className="mt-1 opacity-90">{question.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {!quizSubmitted && (
+                      <Button 
+                        onClick={handleQuizSubmit}
+                        variant="hero"
+                        disabled={Object.keys(quizAnswers).length !== (currentStepData.quizQuestions?.length || 0)}
+                        className="w-full"
+                      >
+                        Submit Quiz
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 {currentStepData.type === 'practice' && (
                   <div className="space-y-4">
                     <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
@@ -316,7 +307,7 @@ This workflow includes specific thresholds, performance tracking, and continuous
                       <Textarea
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
-                        placeholder={`Write your ${lesson.role.toLowerCase()} response here...`}
+                        placeholder="Write your response here..."
                         className="min-h-32"
                       />
                     </div>
@@ -360,9 +351,14 @@ This workflow includes specific thresholds, performance tracking, and continuous
                   <Button 
                     variant="default"
                     onClick={handleNext}
-                    disabled={currentStep === lesson.steps.length - 1}
+                    disabled={
+                      currentStep === lesson.steps.length - 1 ? false :
+                      currentStepData.type === 'quiz' ? !quizSubmitted :
+                      currentStepData.type === 'practice' ? !showFeedback :
+                      false
+                    }
                   >
-                    Next
+                    {currentStep === lesson.steps.length - 1 ? 'Complete Lesson' : 'Next'}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -386,7 +382,10 @@ This workflow includes specific thresholds, performance tracking, and continuous
               <div className="space-y-3 text-sm">
                 <div className="bg-muted/50 rounded-lg p-3">
                   <p className="text-muted-foreground">
-                    I'm here to guide you through this lesson. Feel free to experiment with different approaches!
+                    {currentStepData.type === 'learn' && "Take your time to understand these concepts. They'll be essential for the practical exercises ahead."}
+                    {currentStepData.type === 'quiz' && "Test your knowledge! Don't worry if you don't get everything right - learning is a process."}
+                    {currentStepData.type === 'practice' && "Apply what you've learned! Remember, practice makes perfect."}
+                    {currentStepData.type === 'feedback' && "Review the feedback carefully - these insights will help you improve your skills."}
                   </p>
                 </div>
                 
@@ -394,7 +393,7 @@ This workflow includes specific thresholds, performance tracking, and continuous
                   <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
                     <p className="text-primary text-xs font-medium mb-1">Pro Tip:</p>
                     <p className="text-muted-foreground text-xs">
-                      Start with your target audience, then mention the key benefit that solves their problem.
+                      Think about your target audience first, then craft your message to address their specific needs and pain points.
                     </p>
                   </div>
                 )}
@@ -422,6 +421,26 @@ This workflow includes specific thresholds, performance tracking, and continuous
                     </span>
                   </div>
                 ))}
+              </div>
+            </Card>
+
+            {/* Course Progress */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-foreground">Course Progress</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Marketing Course</span>
+                  <span className="font-medium text-foreground">{progress.completedLessons.length}/5</span>
+                </div>
+                <Progress value={(progress.completedLessons.length / 5) * 100} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {progress.completedLessons.length === 0 && "Start your AI marketing journey!"}
+                  {progress.completedLessons.length > 0 && progress.completedLessons.length < 5 && "Keep going! You're making great progress."}
+                  {progress.completedLessons.length === 5 && "🎉 Course completed! You're an AI marketing expert!"}
+                </p>
               </div>
             </Card>
           </div>

@@ -12,8 +12,11 @@ import {
   Star,
   ArrowRight,
   Zap,
-  Brain
+  Brain,
+  Lock
 } from "lucide-react";
+import { marketingCourse } from "@/data/marketingCourse";
+import { useCourseProgress } from "@/hooks/useCourseProgress";
 
 interface DashboardProps {
   role: string;
@@ -21,14 +24,16 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ role, onStartLesson }: DashboardProps) => {
+  const { progress, getProgressPercentage } = useCourseProgress();
+
   // Mock data - in real app this would come from API
   const userData = {
     name: "Alex",
     role: "Marketing Professional",
-    totalLessons: 12,
-    completedLessons: 4,
-    currentStreak: 5,
-    totalPoints: 1250,
+    totalLessons: marketingCourse.length,
+    completedLessons: progress.completedLessons.length,
+    currentStreak: progress.streak,
+    totalPoints: progress.totalPoints,
     nextBadge: "AI Content Master",
     pointsToNextBadge: 250
   };
@@ -164,13 +169,27 @@ const Dashboard = ({ role, onStartLesson }: DashboardProps) => {
     ]
   };
 
-  const lessons = roleBasedLessons[userData.role as keyof typeof roleBasedLessons] || roleBasedLessons["Marketing Professional"];
+  const lessons = marketingCourse.map(lesson => {
+    const isCompleted = progress.completedLessons.includes(lesson.id);
+    const isLocked = lesson.prerequisites && !lesson.prerequisites.every(prereq => progress.completedLessons.includes(prereq));
+    
+    return {
+      id: lesson.id,
+      title: lesson.title,
+      description: lesson.description,
+      duration: lesson.estimatedTime,
+      difficulty: lesson.difficulty,
+      completed: isCompleted,
+      locked: isLocked,
+      type: lesson.type
+    };
+  });
 
   const achievements = [
-    { name: "First Steps", description: "Completed first lesson", unlocked: true },
-    { name: "Consistent Learner", description: "5-day learning streak", unlocked: true },
-    { name: "AI Practitioner", description: "Applied AI in 3 projects", unlocked: false },
-    { name: "Content Master", description: "Mastered all content lessons", unlocked: false }
+    { name: "First Steps", description: "Completed first lesson", unlocked: progress.achievements.includes('first-lesson') },
+    { name: "Content Creator", description: "AI content mastery", unlocked: progress.achievements.includes('content-creator') },
+    { name: "Weekly Warrior", description: "7-day learning streak", unlocked: progress.achievements.includes('streak-7') },
+    { name: "Marketing Master", description: "Completed all lessons", unlocked: progress.achievements.includes('analytics-master') }
   ];
 
   return (
@@ -263,7 +282,7 @@ const Dashboard = ({ role, onStartLesson }: DashboardProps) => {
                             {lesson.completed ? (
                               <CheckCircle2 className="w-4 h-4 text-white" />
                             ) : lesson.locked ? (
-                              <div className="w-3 h-3 bg-muted-foreground rounded-full" />
+                              <Lock className="w-4 h-4 text-muted-foreground" />
                             ) : (
                               <PlayCircle className="w-4 h-4 text-white" />
                             )}
@@ -338,9 +357,14 @@ const Dashboard = ({ role, onStartLesson }: DashboardProps) => {
                   <span className="text-sm text-muted-foreground">Complete 3 lessons</span>
                   <span className="text-sm font-medium text-foreground">2/3</span>
                 </div>
-                <Progress value={67} className="h-2" />
+                <Progress 
+                  value={getProgressPercentage()} 
+                  className="h-2"
+                />
                 <p className="text-xs text-muted-foreground">
-                  Great progress! One more lesson to reach your goal.
+                  {progress.completedLessons.length === 0 && "Start your AI marketing journey!"}
+                  {progress.completedLessons.length > 0 && progress.completedLessons.length < marketingCourse.length && `${marketingCourse.length - progress.completedLessons.length} lessons remaining`}
+                  {progress.completedLessons.length === marketingCourse.length && "🎉 All lessons completed!"}
                 </p>
               </div>
             </Card>
