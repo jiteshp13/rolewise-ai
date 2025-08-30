@@ -33,38 +33,138 @@ const Dashboard = ({ role, onStartLesson }: DashboardProps) => {
     pointsToNextBadge: 250
   };
 
-  const lessons = [
-    {
-      id: "marketing-ad-copy",
-      title: "AI-Powered Ad Copy Creation",
-      description: "Master the art of creating compelling advertisements with AI assistance",
-      duration: "8 mins",
-      difficulty: "Beginner",
-      completed: false,
-      locked: false,
-      type: "hands-on"
-    },
-    {
-      id: "marketing-content-strategy",
-      title: "Content Strategy with AI Insights",
-      description: "Develop data-driven content strategies using AI analytics",
-      duration: "12 mins",
-      difficulty: "Intermediate",
-      completed: false,
-      locked: false,
-      type: "project"
-    },
-    {
-      id: "marketing-campaign-optimization",
-      title: "AI Campaign Optimization",
-      description: "Learn to optimize campaigns using AI-powered A/B testing",
-      duration: "15 mins",
-      difficulty: "Advanced",
-      completed: false,
-      locked: true,
-      type: "hands-on"
-    }
-  ];
+  const roleBasedLessons = {
+    "Marketing Professional": [
+      {
+        id: "marketing-ad-copy",
+        title: "AI-Powered Ad Copy Creation",
+        description: "Master the art of creating compelling advertisements with AI assistance",
+        duration: "8 mins",
+        difficulty: "Beginner",
+        completed: false,
+        locked: false,
+        type: "hands-on"
+      },
+      {
+        id: "marketing-content-strategy",
+        title: "Content Strategy with AI Insights",
+        description: "Develop data-driven content strategies using AI analytics",
+        duration: "12 mins",
+        difficulty: "Intermediate",
+        completed: false,
+        locked: false,
+        type: "project"
+      },
+      {
+        id: "marketing-campaign-optimization",
+        title: "AI Campaign Optimization",
+        description: "Learn to optimize campaigns using AI-powered A/B testing",
+        duration: "15 mins",
+        difficulty: "Advanced",
+        completed: false,
+        locked: true,
+        type: "hands-on"
+      }
+    ],
+    "HR Professional": [
+      {
+        id: "hr-job-description",
+        title: "AI-Assisted Job Description Writing",
+        description: "Create compelling job descriptions that attract top talent",
+        duration: "10 mins",
+        difficulty: "Beginner",
+        completed: false,
+        locked: false,
+        type: "hands-on"
+      },
+      {
+        id: "hr-interview-questions",
+        title: "AI-Generated Interview Questions",
+        description: "Generate effective interview questions tailored to specific roles",
+        duration: "8 mins",
+        difficulty: "Beginner",
+        completed: false,
+        locked: false,
+        type: "practice"
+      },
+      {
+        id: "hr-employee-communications",
+        title: "AI-Enhanced Employee Communications",
+        description: "Draft clear, empathetic employee communications using AI",
+        duration: "12 mins",
+        difficulty: "Intermediate",
+        completed: false,
+        locked: true,
+        type: "project"
+      }
+    ],
+    "Customer Support": [
+      {
+        id: "support-response",
+        title: "AI-Enhanced Customer Support",
+        description: "Handle customer inquiries with AI-powered responses",
+        duration: "7 mins",
+        difficulty: "Beginner",
+        completed: false,
+        locked: false,
+        type: "hands-on"
+      },
+      {
+        id: "support-escalation",
+        title: "AI-Assisted Issue Escalation",
+        description: "Learn when and how to escalate customer issues effectively",
+        duration: "9 mins",
+        difficulty: "Intermediate",
+        completed: false,
+        locked: false,
+        type: "practice"
+      },
+      {
+        id: "support-knowledge-base",
+        title: "AI-Powered Knowledge Base Creation",
+        description: "Build comprehensive help articles using AI assistance",
+        duration: "14 mins",
+        difficulty: "Advanced",
+        completed: false,
+        locked: true,
+        type: "project"
+      }
+    ],
+    "Operations": [
+      {
+        id: "ops-automation",
+        title: "Workflow Automation with AI",
+        description: "Streamline operations using AI-powered automation",
+        duration: "12 mins",
+        difficulty: "Intermediate",
+        completed: false,
+        locked: false,
+        type: "hands-on"
+      },
+      {
+        id: "ops-data-analysis",
+        title: "AI-Driven Data Analysis",
+        description: "Extract insights from operational data using AI tools",
+        duration: "15 mins",
+        difficulty: "Advanced",
+        completed: false,
+        locked: false,
+        type: "project"
+      },
+      {
+        id: "ops-process-optimization",
+        title: "AI Process Optimization",
+        description: "Identify and optimize inefficient processes with AI",
+        duration: "18 mins",
+        difficulty: "Advanced",
+        completed: false,
+        locked: true,
+        type: "hands-on"
+      }
+    ]
+  };
+
+  const lessons = roleBasedLessons[userData.role as keyof typeof roleBasedLessons] || roleBasedLessons["Marketing Professional"];
 
   const achievements = [
     { name: "First Steps", description: "Completed first lesson", unlocked: true },
